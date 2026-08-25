@@ -1,0 +1,457 @@
+<div id="app"></div>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
+
+  :root{
+    --bg: #eef2f4; --ink: #16232c; --ink-soft: #4a5c66; --line: #d6dfe3;
+    --surface: #ffffff; --surface-locked: #f4f7f8;
+    --accent: #1f5c78; --accent-deep: #123c4f;
+    --ok: #2f7d5a; --ok-bg: #e7f3ec; --warn: #b5650f; --warn-bg: #fbeee0;
+    --radius: 10px; --mono: 'IBM Plex Mono', monospace; --sans: 'IBM Plex Sans', sans-serif;
+  }
+  #app *{ box-sizing:border-box; }
+  #app{ font-family: var(--sans); color: var(--ink); background: var(--bg); min-height:100%; max-width:640px; margin:0 auto; }
+  .topbar{ background: var(--accent-deep); color:#eaf1f4; padding:18px 20px 16px; }
+  .topbar h1{ margin:0; font-size:20px; font-weight:600; }
+  .topbar p{ margin:4px 0 0; font-size:13px; color:#a9c3cf; }
+  .lang-switch{ display:flex; gap:6px; margin-bottom:10px; }
+  .lang-btn{ font-size:12px; font-weight:700; letter-spacing:.03em; padding:5px 12px; border-radius:20px; border:1px solid rgba(255,255,255,0.3); background:transparent; color:#a9c3cf; cursor:pointer; }
+  .lang-btn.active{ background:#eaf1f4; color:var(--accent-deep); border-color:#eaf1f4; }
+  .intervento-badge{ display:inline-block; margin-top:10px; font-family: var(--mono); font-size:12.5px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.25); padding:5px 11px; border-radius:6px; color:#dceaf0; }
+  .intervento-badge b{ color:#fff; }
+  .tabs{ display:flex; gap:2px; margin-top:16px; }
+  .tab{ font-size:13px; font-weight:600; padding:8px 14px; border-radius:6px 6px 0 0; cursor:pointer; color:#a9c3cf; background:transparent; border:none; }
+  .tab.active{ background: var(--bg); color:var(--accent-deep); }
+  .content{ padding:18px 20px 60px; }
+  .rail{ display:flex; gap:3px; margin-bottom:20px; flex-wrap:wrap; align-items:center; }
+  .dot{ width:20px; height:5px; border-radius:3px; background:var(--line); }
+  .dot.done{ background: var(--ok); } .dot.current{ background: var(--accent); }
+  .rail-label{ font-family:var(--mono); font-size:11px; color:var(--ink-soft); margin-left:6px; }
+  .card{ background: var(--surface); border:1px solid var(--line); border-radius: var(--radius); padding:16px; margin-bottom:12px; }
+  .card.locked{ background: var(--surface-locked); color:#9aa8ae; }
+  .card.locked h3, .card.locked .field-label{ color:#9aa8ae; }
+  .field{ margin-bottom:14px; } .field:last-child{ margin-bottom:0; }
+  .field-label{ display:block; font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-soft); margin-bottom:6px; }
+  select, input[type=text], input[type=date], textarea{ width:100%; font-size:14px; padding:10px 12px; border-radius:7px; border:1px solid var(--line); background:#fff; color:var(--ink); }
+  textarea{ min-height:70px; resize:vertical; }
+  .photo-drop{ display:block; border:1.5px dashed var(--line); border-radius:8px; padding:14px; text-align:center; cursor:pointer; font-size:13px; color:var(--ink-soft); background:#fbfcfc; }
+  .photo-drop input{ display:none; }
+  .thumbs{ display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
+  .thumb{ width:64px; height:64px; border-radius:6px; overflow:hidden; border:1px solid var(--line); position:relative; }
+  .thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .item-head{ display:flex; gap:12px; }
+  .item-num{ font-family: var(--mono); font-weight:700; font-size:13px; width:28px; height:28px; min-width:28px; border-radius:6px; display:flex; align-items:center; justify-content:center; background: var(--accent-deep); color:#dceaf0; }
+  .card.locked .item-num{ background:#c9d3d7; color:#fff; }
+  .card.answered-ok .item-num{ background: var(--ok); }
+  .card.answered-warn .item-num{ background: var(--warn); }
+  h3{ font-size:14.5px; font-weight:600; margin:0 0 4px; }
+  .note-hint{ font-size:12px; color:var(--ink-soft); margin:0 0 12px; }
+  .toggle-row{ display:flex; gap:8px; margin-top:10px; }
+  .toggle-btn{ flex:1; padding:9px; border-radius:7px; border:1px solid var(--line); background:#fff; font-weight:600; font-size:13px; cursor:pointer; color:var(--ink-soft); }
+  .toggle-btn.yes.active{ background: var(--ok-bg); border-color:var(--ok); color:var(--ok); }
+  .toggle-btn.no.active{ background: var(--warn-bg); border-color:var(--warn); color:var(--warn); }
+  .toggle-btn:disabled{ opacity:.5; cursor:not-allowed; }
+  .conditional{ margin-top:12px; padding-top:12px; border-top:1px dashed var(--line); }
+  .esito-box{ border-radius: var(--radius); padding:16px; margin-bottom:14px; border:1px solid var(--line); background:#fff; }
+  .esito-pill{ font-family:var(--mono); font-size:12px; font-weight:600; padding:4px 10px; border-radius:20px; }
+  .esito-pill.ok{ background: var(--ok-bg); color:var(--ok); }
+  .esito-pill.warn{ background: var(--warn-bg); color:var(--warn); }
+  .esito-pill.pending{ background:#eef1f2; color:var(--ink-soft); }
+  .btn{ width:100%; padding:13px; border-radius:8px; border:none; font-weight:600; font-size:14.5px; cursor:pointer; background: var(--accent); color:#fff; margin-top:6px; }
+  .btn:disabled{ background:#c3ccd0; cursor:not-allowed; }
+  .row2{ display:flex; gap:10px; } .row2 > div{ flex:1; }
+  .history-item{ background:#fff; border:1px solid var(--line); border-radius:8px; padding:12px 14px; margin-bottom:10px; }
+  .history-top{ display:flex; justify-content:space-between; }
+  .history-mat{ font-family:var(--mono); font-weight:700; font-size:13.5px; }
+  .history-meta{ font-size:12px; color:var(--ink-soft); margin-top:3px; }
+  .empty-state{ text-align:center; color:var(--ink-soft); font-size:13.5px; padding:40px 10px; }
+  .banner-ok{ background: var(--ok-bg); color:var(--ok); border:1px solid var(--ok); border-radius:8px; padding:12px 14px; font-size:13.5px; margin-bottom:14px; }
+  .banner-warn{ background: var(--warn-bg); color:var(--warn); border:1px solid var(--warn); border-radius:8px; padding:12px 14px; font-size:13.5px; margin-bottom:14px; }
+  .config-note{ font-size:12px; color:var(--ink-soft); background:#fff8e5; border:1px solid #f0e0a0; padding:10px 12px; border-radius:8px; margin-bottom:14px; }
+  .footer-hint{ font-size:11.5px; color:var(--ink-soft); margin:12px 0 4px; line-height:1.5; }
+  .autocomplete-list{ position:absolute; top:2px; left:0; right:0; background:#fff; border:1.5px solid var(--accent); border-top:none; border-radius:0 0 9px 9px; max-height:230px; overflow-y:auto; z-index:30; box-shadow:0 8px 20px rgba(18,60,79,.15); }
+  .autocomplete-item{ padding:10px 13px; cursor:pointer; font-size:13.5px; border-bottom:1px solid var(--bg); }
+  .autocomplete-item:hover{ background: var(--bg); }
+  .autocomplete-item b{ color: var(--ink); }
+  .autocomplete-item .meta{ color: var(--ink-soft); font-size:12px; margin-top:2px; }
+</style>
+
+<script>
+(function(){
+
+  // ====== CONFIGURAZIONE: incolla qui l'URL del Web App Apps Script ======
+  const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbxZzPwoZtlv2I3vOKYUw4A-ZnEwjBN8ylMojSwmnHG0e2qv8tB2bHiwaORggu-2ZzUS/exec'; // es. https://script.google.com/macros/s/XXXX/exec
+
+  const ITEMS_BY_LANG = {
+    de: [
+      { title: "Prüfung der korrekten Installation und Nutzung des Geräts",
+        hint: "Etwaige Installations- oder Nutzungsmängel bzw. ungünstige Betriebsbedingungen vermerken." },
+      { title: "Prüfung des Allgemeinzustands, der Unversehrtheit und der korrekten Montage des Zubehörs",
+        hint: "Z. B. Nachtrollo, Luftleitbleche, Konsolen, Böden, Preisschienen, Produktstopper, Schutzabdeckungen." },
+      { title: "Prüfung der Unversehrtheit von Netzkabel und Stecker",
+        hint: "Etwaige Auffälligkeiten an Kabel und Stecker vermerken." },
+      { title: "Prüfung der Funktion der Beleuchtungsanlage", hint: "" },
+      { title: "Prüfung der Funktion der Lüftungsanlage (Ventilator Verkaufsraum)", hint: "" },
+      { title: "Reinigung des Verflüssigers, Filterwechsel und Prüfung des zugehörigen Ventilators", hint: "" },
+      { title: "Prüfung der Funktion des Wasserablauf- und Entsorgungssystems",
+        hint: "Ablaufsiphon, Auffangwanne, Heissgasschlange, PTC-Heizung, Füllstandssensor." },
+      { title: "Funktionsfähigkeit der elektronischen Steuerung",
+        hint: "Bedientasten, Korrektur unsachgemässer Einstellungen, Ablesen der Regelparameter/-fühler." },
+      { title: "Funktionsfähigkeit der Kälteanlage und Kühlleistung",
+        hint: "Kühlleistung durch Beobachtung einiger Betriebszyklen der Anlage überprüfen." }
+    ],
+    en: [
+      { title: "Check of correct installation and use of the cabinet",
+        hint: "Report any installation or usage defects, or unfavourable operating conditions." },
+      { title: "Check of general condition, integrity and correct installation of accessories",
+        hint: "E.g. night blind, air deflectors, brackets, shelves, price holders, product stoppers, protective covers." },
+      { title: "Check of power cable and plug integrity",
+        hint: "Report any anomalies concerning the cable-plug assembly." },
+      { title: "Check of lighting system function", hint: "" },
+      { title: "Check of ventilation system function (display area fan)", hint: "" },
+      { title: "Condenser cleaning, filter replacement and check of the associated fan", hint: "" },
+      { title: "Check of water drainage and disposal system function",
+        hint: "Drain trap, collection tray, hot gas coil, PTC heater, level sensor." },
+      { title: "Operation of the electronic control",
+        hint: "Control keys, correction of improper settings, reading of regulation parameters/probes." },
+      { title: "Operation of the refrigeration system and preservation performance",
+        hint: "Check cooling performance by observing a few cycles of the system." }
+    ]
+  };
+
+  const STRINGS = {
+    de: {
+      title: "Ordentliche Wartung Kühlmöbel",
+      interventoLabel: "Wartungs-Nr.",
+      interventoLoading: "wird geladen…",
+      interventoUnavailable: "n/a",
+      matricolaLabel: "Seriennummer",
+      matricolaPlaceholder: "Seriennummer, Geschäft oder Ort suchen…",
+      dataLabel: "Wartungsdatum",
+      tecnicoLabel: "Techniker",
+      tecnicoPlaceholder: "Vor- und Nachname",
+      puntoVenditaLabel: "Verkaufsstelle",
+      puntoVenditaPlaceholder: "Adresse oder Verkaufsstellenr.",
+      fotoGeneraleLabel: "Fotos Allgemeinzustand",
+      fotoGeneraleBtn: "📷 Foto des Geräts aufnehmen",
+      yes: "Ja, i.O.",
+      no: "Nein, Mangel",
+      noteLabel: "Problembeschreibung",
+      notePlaceholder: "Beschreibe die festgestellte Störung…",
+      solutionLabel: "Durchgeführte Massnahme",
+      solutionPlaceholder: "Was wurde unternommen? Z. B. Problem behoben, Ersatzteil eingebaut, provisorische Lösung…",
+      fotoDettaglioLabel: "Detailfoto Störung",
+      fotoDettaglioBtn: "📷 Foto aufnehmen",
+      noteFinaliLabel: "Abschliessende Bemerkungen (optional)",
+      noteFinaliPlaceholder: "Weitere Bemerkungen zum Einsatz…",
+      footerHint: "Bei allen Meldungen und Anfragen bitte die Wartungsnummer angeben.",
+      saveBtn: "Wartung speichern",
+      saving: "Wird gesendet…",
+      savedMsg: mat => "Wartung gespeichert für " + mat + ".",
+      errorMsg: "Fehler beim Senden. Verbindung prüfen und erneut versuchen.",
+      configNote: "⚠️ Backend nicht konfiguriert: Bitte die Web-App-URL von Apps Script in der Konstante WEBAPP_URL oben im Code einfügen."
+    },
+    en: {
+      title: "Maintenance of refrigerated cabinets",
+      interventoLabel: "Service No.",
+      interventoLoading: "loading…",
+      interventoUnavailable: "n/a",
+      matricolaLabel: "Serial number",
+      matricolaPlaceholder: "Search serial number, store or city…",
+      dataLabel: "Service date",
+      tecnicoLabel: "Technician",
+      tecnicoPlaceholder: "Full name",
+      puntoVenditaLabel: "Store",
+      puntoVenditaPlaceholder: "Address or store code",
+      fotoGeneraleLabel: "General condition photos",
+      fotoGeneraleBtn: "📷 Take photo of the cabinet",
+      yes: "Yes, compliant",
+      no: "No, issue",
+      noteLabel: "Problem description",
+      notePlaceholder: "Describe the issue found…",
+      solutionLabel: "Action taken",
+      solutionPlaceholder: "What was done? E.g. problem fixed, part replaced, temporary solution…",
+      fotoDettaglioLabel: "Detail photo of fault",
+      fotoDettaglioBtn: "📷 Take photo",
+      noteFinaliLabel: "Final notes (optional)",
+      noteFinaliPlaceholder: "Any additional remarks about this service…",
+      footerHint: "For all reports and requests, please indicate the service number.",
+      saveBtn: "Save service record",
+      saving: "Sending…",
+      savedMsg: mat => "Service record saved for " + mat + ".",
+      errorMsg: "Error sending data. Check your connection and try again.",
+      configNote: "⚠️ Backend not configured: paste the Apps Script Web App URL into the WEBAPP_URL constant at the top of the code."
+    }
+  };
+
+
+  function pad(n){ return String(n).padStart(3,'0'); }
+  const MATRICOLE = [{"matricola": "S230230", "plz": "1003", "ort": "Lausanne", "punto_vendita": "29159 - k kiosk Lausanne Chauderon"}, {"matricola": "S230231", "plz": "1003", "ort": "Lausanne", "punto_vendita": "16139 - avec Lausanne"}, {"matricola": "S230197", "plz": "1020", "ort": "Renens VD", "punto_vendita": "29273 - k kiosk Renens Migros Metropolé"}, {"matricola": "S230260", "plz": "1020", "ort": "Renens VD", "punto_vendita": "29165 - k kiosk Renens CFF"}, {"matricola": "S230220", "plz": "1030", "ort": "Bussigny-près-Lausanne", "punto_vendita": "29266 - k kiosk Bussigny Jumbo"}, {"matricola": "S230194", "plz": "1053", "ort": "Cugy", "punto_vendita": "29365 - k kiosk Cugy Migros"}, {"matricola": "S230209", "plz": "1066", "ort": "Epalinges", "punto_vendita": "16145 - avec Epalinges"}, {"matricola": "S230189", "plz": "1110", "ort": "Morges", "punto_vendita": "18379 - Tamoil Morges"}, {"matricola": "S230206", "plz": "1180", "ort": "Rolle", "punto_vendita": "14652 - Tamoil Rolle"}, {"matricola": "S230195", "plz": "1196", "ort": "Gland", "punto_vendita": "16114 - avec Gare de Gland"}, {"matricola": "S230199", "plz": "1196", "ort": "Gland", "punto_vendita": "16114 - avec Gare de Gland"}, {"matricola": "S230234", "plz": "1203", "ort": "Genève", "punto_vendita": "21814 - k kiosk Géneve Coop Charmilles"}, {"matricola": "S230182", "plz": "1206", "ort": "Genève", "punto_vendita": "16546 - k kiosk Plateau de Champel"}, {"matricola": "S230166", "plz": "1209", "ort": "Genève", "punto_vendita": "16464 - Tamoil Genève"}, {"matricola": "S230205", "plz": "1212", "ort": "Grand-Lancy", "punto_vendita": "16540 - avec Bachet Lancy"}, {"matricola": "S230229", "plz": "1212", "ort": "Grand-Lancy", "punto_vendita": "21427 - Tamoil la Praille"}, {"matricola": "S230139", "plz": "1214", "ort": "Vernier", "punto_vendita": "13611 - k kiosk im Coop-Megastore"}, {"matricola": "S230233", "plz": "1214", "ort": "Vernier", "punto_vendita": "29042 - k kiosk Vernier Arcenter"}, {"matricola": "S230198", "plz": "1215", "ort": "Genève Aéroport", "punto_vendita": "29064 - k kiosk Genève AIG Arrivée"}, {"matricola": "S230203", "plz": "1217", "ort": "Meyrin", "punto_vendita": "29004 - k kiosk Meyrin Jumbo"}, {"matricola": "S230207", "plz": "1227", "ort": "Carouge GE", "punto_vendita": "29082 - k kiosk Carouge Migros M-Parc"}, {"matricola": "S230191", "plz": "1247", "ort": "Anières", "punto_vendita": "18321 - Tamoil Anières"}, {"matricola": "S230136", "plz": "1257", "ort": "La Croix-de-Rozon", "punto_vendita": "16466 - Tamoil La Croix-de-Rozon"}, {"matricola": "S230201", "plz": "1400", "ort": "Yverdon-les-Bains", "punto_vendita": "29304 - k kiosk Yverdon Promenade"}, {"matricola": "S230056", "plz": "1470", "ort": "Estavayer-le-Lac", "punto_vendita": "29327 - k kiosk Estavayer-Le-Lac Migr"}, {"matricola": "S230235", "plz": "1530", "ort": "Payerne", "punto_vendita": "16485 - Tamoil Payerne"}, {"matricola": "S230057", "plz": "1618", "ort": "Châtel-St-Denis", "punto_vendita": "29331 - k kiosk Chatel-St-Denis Gare CFF"}, {"matricola": "S230030", "plz": "1630", "ort": "Bulle", "punto_vendita": "29329 - k kiosk Bulle Gare"}, {"matricola": "S230061", "plz": "1680", "ort": "Romont FR", "punto_vendita": "16144 - avec Romont"}, {"matricola": "S230086", "plz": "1700", "ort": "Fribourg", "punto_vendita": "29301 - k kiosk EKZ Fribourg Pérolles"}, {"matricola": "S230024", "plz": "1754", "ort": "Avry-sur-Matran", "punto_vendita": "29364 - k kiosk EKZ Avry Centre"}, {"matricola": "S230035", "plz": "1763", "ort": "Granges-Paccot", "punto_vendita": "17683 - Tamoil Granges-Paccot"}, {"matricola": "S230168", "plz": "1815", "ort": "Clarens", "punto_vendita": "17770 - Tamoil Clarens"}, {"matricola": "S230126", "plz": "1852", "ort": "Roche VD", "punto_vendita": "17744 - Tamoil Roche"}, {"matricola": "S230211", "plz": "1860", "ort": "Aigle", "punto_vendita": "29392 - k kiosk EKZ Chablais Centre"}, {"matricola": "S230200", "plz": "1890", "ort": "St-Maurice", "punto_vendita": "17121 - avec St. Maurice CFF"}, {"matricola": "S22730-1", "plz": "1920", "ort": "Martigny", "punto_vendita": "21766 - k kiosk Martigny Central"}, {"matricola": "S230137", "plz": "1934", "ort": "Bagnes", "punto_vendita": "29404 - k kiosk Le Chable Gare"}, {"matricola": "S230042", "plz": "2000", "ort": "Neuchâtel", "punto_vendita": "29432 - k kiosk Neuchatel CFF Hall"}, {"matricola": "S230049", "plz": "2000", "ort": "Neuchâtel", "punto_vendita": "11968 - Tamoil Neuchâtel"}, {"matricola": "S230033", "plz": "2024", "ort": "St-Aubin-Sauges", "punto_vendita": "18030 - Mini Prix St. Aubin"}, {"matricola": "S230186", "plz": "2503", "ort": "Biel/Bienne", "punto_vendita": "32308 - Tamoil Biel Port"}, {"matricola": "S230190", "plz": "2504", "ort": "Biel/Bienne", "punto_vendita": "36309 - k kiosk Tissot Arena"}, {"matricola": "S230038", "plz": "2520", "ort": "La Neuveville", "punto_vendita": "16324 - avec La Neuveville"}, {"matricola": "S230063", "plz": "2540", "ort": "Grenchen", "punto_vendita": "16158 - avec Grenchen"}, {"matricola": "S230040", "plz": "2557", "ort": "Studen BE", "punto_vendita": "17847 - avec beyond Studen BE"}, {"matricola": "S230208", "plz": "2560", "ort": "Nidau", "punto_vendita": "18025 - BP Nidau"}, {"matricola": "S230039", "plz": "2610", "ort": "St-Imier", "punto_vendita": "16255 - avec St.Imier"}, {"matricola": "S230051", "plz": "2800", "ort": "Delémont", "punto_vendita": "29416 - k kiosk Delemont CFF"}, {"matricola": "S230011", "plz": "3006", "ort": "Bern", "punto_vendita": "31666 - k kiosk altes Tramdepot"}, {"matricola": "S230017", "plz": "3011", "ort": "Bern", "punto_vendita": "19364 - k kiosk Postautostation"}, {"matricola": "S230027", "plz": "3011", "ort": "Bern", "punto_vendita": "31813 - k kiosk Eikahaus"}, {"matricola": "S230224", "plz": "3011", "ort": "Bern", "punto_vendita": "29781 - Press & Books Christoffel"}, {"matricola": "S230031", "plz": "3012", "ort": "Bern", "punto_vendita": "18038 - Shell Bern Länggasse"}, {"matricola": "S230045", "plz": "3018", "ort": "Bern", "punto_vendita": "15936 - avec Bern-Bümpliz"}, {"matricola": "S230250", "plz": "3053", "ort": "Münchenbuchsee", "punto_vendita": "17963 - avec express Münchenbuchsee"}, {"matricola": "S230193", "plz": "3054", "ort": "Schüpfen", "punto_vendita": "16682 - avec beyond Schüpfen"}, {"matricola": "S230037", "plz": "3063", "ort": "Ittigen", "punto_vendita": "16505 - Tamoil Ittigen"}, {"matricola": "S230202", "plz": "3063", "ort": "Ittigen", "punto_vendita": "21420 - Tamoil Grauholz"}, {"matricola": "S230257", "plz": "3076", "ort": "Worb", "punto_vendita": "39242 - avec Worb"}, {"matricola": "S230192", "plz": "3098", "ort": "Köniz", "punto_vendita": "18036 - Ruedi Rüssel Köniz"}, {"matricola": "S230261", "plz": "3110", "ort": "Münsingen", "punto_vendita": "24348 - k kiosk Migros"}, {"matricola": "S230246", "plz": "3123", "ort": "Belp", "punto_vendita": "13178 - Tamoil Belp"}, {"matricola": "S230021", "plz": "3175", "ort": "Flamatt", "punto_vendita": "18019 - BP Flamatt"}, {"matricola": "S230242", "plz": "3186", "ort": "Düdingen", "punto_vendita": "29787 - k kiosk Migros"}, {"matricola": "S230248", "plz": "3210", "ort": "Kerzers", "punto_vendita": "34708 - Bahnhofkiosk"}, {"matricola": "S230059", "plz": "3270", "ort": "Aarberg", "punto_vendita": "16068 - avec Aarberg"}, {"matricola": "S230046", "plz": "3292", "ort": "Busswil b. Büren", "punto_vendita": "17272 - avec beyond Busswil bei Büren"}, {"matricola": "S230018", "plz": "3315", "ort": "Bätterkinden", "punto_vendita": "31564 - Bahnhofkiosk"}, {"matricola": "S230249", "plz": "3400", "ort": "Burgdorf", "punto_vendita": "18018 - Shell Burgdorf"}, {"matricola": "S230267", "plz": "3427", "ort": "Utzenstorf", "punto_vendita": "38717 - Bahnhofkiosk RM"}, {"matricola": "S230259", "plz": "3550", "ort": "Langnau im Emmental", "punto_vendita": "35140 - avec Langnau"}, {"matricola": "S230196", "plz": "3600", "ort": "Thun", "punto_vendita": "24240 - k kiosk Aarezentrum"}, {"matricola": "S230225", "plz": "3672", "ort": "Oberdiessbach", "punto_vendita": "29699 - avec Oberdiessbach"}, {"matricola": "S230268", "plz": "3700", "ort": "Spiez", "punto_vendita": "21666 - BP Service Spiez"}, {"matricola": "S230269", "plz": "3700", "ort": "Spiez", "punto_vendita": "16362 - avec Spiez"}, {"matricola": "S230141", "plz": "3714", "ort": "Frutigen", "punto_vendita": "33543 - Bahnhofkiosk"}, {"matricola": "S230265", "plz": "3714", "ort": "Frutigen", "punto_vendita": "33543 - Bahnhofkiosk"}, {"matricola": "S230160", "plz": "3770", "ort": "Zweisimmen", "punto_vendita": "17696 - k kiosk Bahnhofstrasse"}, {"matricola": "S230127", "plz": "3780", "ort": "Gstaad", "punto_vendita": "18481 - Press & Books Bahnhof"}, {"matricola": "S230255", "plz": "3792", "ort": "Saanen", "punto_vendita": "15132 - Tamoil Gstaad Saanen"}, {"matricola": "S230236", "plz": "3800", "ort": "Interlaken", "punto_vendita": "14294 - avec Interlaken"}, {"matricola": "S230153", "plz": "3818", "ort": "Grindelwald", "punto_vendita": "23552 - k kiosk Neuenhaus"}, {"matricola": "S230256", "plz": "3860", "ort": "Meiringen", "punto_vendita": "35878 - avec Meiringen"}, {"matricola": "S230163", "plz": "3929", "ort": "Täsch", "punto_vendita": "39726 - avec Täsch"}, {"matricola": "S230213", "plz": "3960", "ort": "Sierre", "punto_vendita": "18430 - Tamoil Sierre"}, {"matricola": "S230087", "plz": "4051", "ort": "Basel", "punto_vendita": "14564 - k kiosk Steinen"}, {"matricola": "S230112", "plz": "4051", "ort": "Basel", "punto_vendita": "31513 - k kiosk Postpassage"}, {"matricola": "S230091", "plz": "4052", "ort": "Basel", "punto_vendita": "25103 - k kiosk Stat.BVB Traml.11"}, {"matricola": "S230237", "plz": "4104", "ort": "Oberwil BL", "punto_vendita": "18048 - BP Oberwil"}, {"matricola": "S230252", "plz": "4106", "ort": "Therwil", "punto_vendita": "24442 - k kiosk Station BLT"}, {"matricola": "S230215", "plz": "4123", "ort": "Allschwil", "punto_vendita": "10743 - Press & Books EKZ Paradies"}, {"matricola": "S230003", "plz": "4132", "ort": "Muttenz", "punto_vendita": "Valora Retail Operations REN"}, {"matricola": "S230107", "plz": "4132", "ort": "Muttenz", "punto_vendita": "24466 - k kiosk Migros Markt"}, {"matricola": "S230103", "plz": "4410", "ort": "Liestal", "punto_vendita": "18051 - Ruedi Rüssel Liestal"}, {"matricola": "S230223", "plz": "4500", "ort": "Solothurn", "punto_vendita": "37945 - avec Solothurn Hauptbahnhof"}, {"matricola": "S230010", "plz": "4513", "ort": "Langendorf", "punto_vendita": "11710 - k kiosk EKZ Langendorf"}, {"matricola": "S230028", "plz": "4562", "ort": "Biberist", "punto_vendita": "32124 - Bahnhofkiosk RBS"}, {"matricola": "S230217", "plz": "4563", "ort": "Gerlafingen", "punto_vendita": "18441 - k kiosk Migros"}, {"matricola": "S230094", "plz": "4657", "ort": "Dulliken", "punto_vendita": "18049 - BP Dulliken"}, {"matricola": "S230258", "plz": "4657", "ort": "Dulliken", "punto_vendita": "18049 - BP Dulliken"}, {"matricola": "S230102", "plz": "4663", "ort": "Aarburg", "punto_vendita": "15164 - avec Aarburg"}, {"matricola": "S230227", "plz": "4900", "ort": "Langenthal", "punto_vendita": "14759 - avec Langenthal"}, {"matricola": "S230266", "plz": "4950", "ort": "Huttwil", "punto_vendita": "26750 - k kiosk Bistro beim MM"}, {"matricola": "S230264", "plz": "5034", "ort": "Suhr", "punto_vendita": "18032 - Ruedi Rüssel Suhr"}, {"matricola": "S230068", "plz": "5200", "ort": "Brugg AG", "punto_vendita": "17245 - avec express Brugg"}, {"matricola": "S230241", "plz": "5300", "ort": "Turgi", "punto_vendita": "17659 - avec Turgi Bahnhof"}, {"matricola": "S230251", "plz": "5312", "ort": "Döttingen", "punto_vendita": "15685 - Tamoil Döttingen"}, {"matricola": "S230048", "plz": "5430", "ort": "Wettingen", "punto_vendita": "38990 - BK Wettingen"}, {"matricola": "S230047", "plz": "5630", "ort": "Muri AG", "punto_vendita": "16305 - avec Muri"}, {"matricola": "S230076", "plz": "5707", "ort": "Seengen", "punto_vendita": "15491 - k kiosk Turm"}, {"matricola": "S230244", "plz": "6002", "ort": "Luzern", "punto_vendita": "35585 - Bahnhofkiosk Unterführung"}, {"matricola": "S230070", "plz": "6010", "ort": "Kriens", "punto_vendita": "25804 - k kiosk B.Migros-Markt"}, {"matricola": "S230069", "plz": "6014", "ort": "Luzern", "punto_vendita": "18023 - Ruedi Rüssel Littau"}, {"matricola": "S230064", "plz": "6020", "ort": "Emmenbrücke", "punto_vendita": "28132 - k kiosk EKZ Sonnenplatz"}, {"matricola": "S230067", "plz": "6020", "ort": "Emmenbrücke", "punto_vendita": "16100 - avec Emmenbrücke"}, {"matricola": "S230079", "plz": "6020", "ort": "Emmenbrücke", "punto_vendita": "21256 - P&B EKZ EmmenCenter EG"}, {"matricola": "S230109", "plz": "6020", "ort": "Emmenbrücke", "punto_vendita": "13134 - k kiosk EKZ Emmen Center"}, {"matricola": "S230253", "plz": "6020", "ort": "Emmenbrücke", "punto_vendita": "19061 - k kiosk MM Meierhöfli"}, {"matricola": "S230095", "plz": "6022", "ort": "Grosswangen", "punto_vendita": "18045 - BP Grosswangen"}, {"matricola": "S230239", "plz": "6074", "ort": "Giswil", "punto_vendita": "15720 - avec Giswil"}, {"matricola": "S230075", "plz": "6110", "ort": "Wolhusen", "punto_vendita": "15938 - avec Wolhusen Bahnhof"}, {"matricola": "S230085", "plz": "6170", "ort": "Schüpfheim", "punto_vendita": "17634 - avec Schüpfheim"}, {"matricola": "S230072", "plz": "6260", "ort": "Reiden", "punto_vendita": "16680 - avec beyond Reiden"}, {"matricola": "S230025", "plz": "6331", "ort": "Hünenberg", "punto_vendita": "18007 - k kiosk Maihölzli"}, {"matricola": "S230034", "plz": "6343", "ort": "Rotkreuz", "punto_vendita": "34957 - avec Rotkreuz"}, {"matricola": "S230066", "plz": "6362", "ort": "Stansstad", "punto_vendita": "38102 - Bahnhofkiosk"}, {"matricola": "S230073", "plz": "6390", "ort": "Engelberg", "punto_vendita": "17846 - avec beyond Engelberg"}, {"matricola": "S230053", "plz": "6440", "ort": "Brunnen", "punto_vendita": "32562 - Bahnhofkiosk"}, {"matricola": "S230093", "plz": "6460", "ort": "Altdorf UR", "punto_vendita": "27032 - k kiosk Urnertor"}, {"matricola": "S230081", "plz": "6490", "ort": "Andermatt", "punto_vendita": "17713 - avec Andermatt"}, {"matricola": "S230169", "plz": "6500", "ort": "Bellinzona", "punto_vendita": "29155 - Chiosco Posta"}, {"matricola": "S230143", "plz": "6512", "ort": "Giubiasco", "punto_vendita": "14168 - Chiosco MM Centro A.Bolle"}, {"matricola": "S230159", "plz": "6512", "ort": "Giubiasco", "punto_vendita": "18456 - Bahnhofkiosk Giubiasco"}, {"matricola": "S230158", "plz": "6592", "ort": "S. Antonino", "punto_vendita": "16023 - Chiosco MMM Centro Migros"}, {"matricola": "S230162", "plz": "6595", "ort": "Lavertezzo Piano", "punto_vendita": "16510 - Stazione Tamoil Riazzino"}, {"matricola": "S230164", "plz": "6600", "ort": "Muralto", "punto_vendita": "18479 - Press & Books"}, {"matricola": "S230165", "plz": "6600", "ort": "Muralto", "punto_vendita": "16339 - avec Muralto"}, {"matricola": "S230154", "plz": "6612", "ort": "Ascona", "punto_vendita": "15203 - Chiosco Manor Delta"}, {"matricola": "S230161", "plz": "6612", "ort": "Ascona", "punto_vendita": "16520 - Tamoil Ascona"}, {"matricola": "S230157", "plz": "6648", "ort": "Minusio", "punto_vendita": "14331 - Chiosco Migros"}, {"matricola": "S230124", "plz": "6710", "ort": "Biasca", "punto_vendita": "17239 - avec Biasca"}, {"matricola": "S230170", "plz": "6710", "ort": "Biasca", "punto_vendita": "16015 - Chiosco Migros"}, {"matricola": "S230123", "plz": "6850", "ort": "Mendrisio", "punto_vendita": "17839 - avec express Mendrisio"}, {"matricola": "S230129", "plz": "6850", "ort": "Mendrisio", "punto_vendita": "25716 - Chiosco alla Valle"}, {"matricola": "S230125", "plz": "6900", "ort": "Lugano", "punto_vendita": "35526 - Chiosco Stazione Principale"}, {"matricola": "S230145", "plz": "6900", "ort": "Lugano", "punto_vendita": "17662 - Centro della Stampa Posta"}, {"matricola": "S230262", "plz": "6900", "ort": "Lugano", "punto_vendita": "17590 - Chiosco MM"}, {"matricola": "S230130", "plz": "6901", "ort": "Lugano", "punto_vendita": "17651 - Chiosco Portici"}, {"matricola": "S230204", "plz": "6901", "ort": "Lugano", "punto_vendita": "17691 - Chiosco Autosilo"}, {"matricola": "S230120", "plz": "6924", "ort": "Sorengo", "punto_vendita": "16553 - Tamoil Sorengo"}, {"matricola": "S230140", "plz": "6950", "ort": "Tesserete", "punto_vendita": "16121 - k kiosk Capriasca"}, {"matricola": "S230135", "plz": "6962", "ort": "Viganello", "punto_vendita": "25651 - Chiosco Centro La Santa"}, {"matricola": "S230149", "plz": "6982", "ort": "Agno", "punto_vendita": "26140 - Chiosco MM Centro Agno"}, {"matricola": "S230111", "plz": "7000", "ort": "Chur", "punto_vendita": "27191 - Bahnhofkiosk PU Ost"}, {"matricola": "S230113", "plz": "7270", "ort": "Davos Platz", "punto_vendita": "23750 - Bahnhofkiosk"}, {"matricola": "S230080", "plz": "7302", "ort": "Landquart", "punto_vendita": "18015 - k kiosk Landquart Falknis"}, {"matricola": "S230099", "plz": "7302", "ort": "Landquart", "punto_vendita": "29878 - avec Landquart"}, {"matricola": "S230084", "plz": "7310", "ort": "Bad Ragaz", "punto_vendita": "14982 - avec Bad Ragaz"}, {"matricola": "S230065", "plz": "7320", "ort": "Sargans", "punto_vendita": "18028 - Avia Sargans"}, {"matricola": "S230114", "plz": "7500", "ort": "St. Moritz", "punto_vendita": "18031 - BP St. Moritz"}, {"matricola": "S230098", "plz": "7503", "ort": "Samedan", "punto_vendita": "18013 - avec Samedan"}, {"matricola": "S230115", "plz": "7550", "ort": "Scuol", "punto_vendita": "27630 - Bahnhofkiosk"}, {"matricola": "S230132", "plz": "8001", "ort": "Zürich", "punto_vendita": "39790 - BK Stadelhofen-Unterf."}, {"matricola": "S230152", "plz": "8001", "ort": "Zürich", "punto_vendita": "14255 - k kiosk EKZ Migros City Zürich"}, {"matricola": "S230167", "plz": "8001", "ort": "Zürich", "punto_vendita": "21012 - k kiosk SZU"}, {"matricola": "S230155", "plz": "8002", "ort": "Zürich", "punto_vendita": "16618 - k kiosk Zürich Enge"}, {"matricola": "S230247", "plz": "8004", "ort": "Zürich", "punto_vendita": "11882 - avec Zürich Hardplatz 1"}, {"matricola": "S230147", "plz": "8038", "ort": "Zürich", "punto_vendita": "21686 - BP Service Wollishofen"}, {"matricola": "S230218", "plz": "8049", "ort": "Zürich", "punto_vendita": "18395 - k kiosk Tramendstat. Franken"}, {"matricola": "S230121", "plz": "8057", "ort": "Zürich", "punto_vendita": "15545 - k kiosk Irchel"}, {"matricola": "S230146", "plz": "8057", "ort": "Zürich", "punto_vendita": "19515 - k kiosk Buchegg"}, {"matricola": "S230210", "plz": "8105", "ort": "Regensdorf", "punto_vendita": "21537 - BP Service Regensdorf"}, {"matricola": "S230222", "plz": "8105", "ort": "Regensdorf", "punto_vendita": "15586 - Press & Books EKZ Zentrum"}, {"matricola": "S230032", "plz": "8126", "ort": "Zumikon", "punto_vendita": "12987 - k kiosk Migros"}, {"matricola": "S230013", "plz": "8134", "ort": "Adliswil", "punto_vendita": "17873 - k kiosk Adliswil Dietlimoos"}, {"matricola": "S230212", "plz": "8135", "ort": "Langnau am Albis", "punto_vendita": "31761 - Tamoil Langnau am Albis"}, {"matricola": "S230187", "plz": "8152", "ort": "Glattbrugg", "punto_vendita": "17082 - avec beyond Glattbrugg"}, {"matricola": "S230118", "plz": "8180", "ort": "Bülach", "punto_vendita": "18825 - Bahnhofkiosk Bülach"}, {"matricola": "S230228", "plz": "8184", "ort": "Bachenbülach", "punto_vendita": "24705 - k kiosk EKZ Parkallee"}, {"matricola": "S230023", "plz": "8187", "ort": "Weiach", "punto_vendita": "18035 - BP Weiach"}, {"matricola": "S230144", "plz": "8193", "ort": "Eglisau", "punto_vendita": "11535 - Tamoil Eglisau"}, {"matricola": "S230041", "plz": "8197", "ort": "Rafz", "punto_vendita": "35992 - k kiosk Bahnhofstrasse"}, {"matricola": "S230020", "plz": "8200", "ort": "Schaffhausen", "punto_vendita": "15168 - k kiosk Vordergasse"}, {"matricola": "S230062", "plz": "8201", "ort": "Schaffhausen", "punto_vendita": "23606 - k kiosk Unterführung"}, {"matricola": "S230058", "plz": "8212", "ort": "Neuhausen am Rheinfall", "punto_vendita": "18067 - BP Neuhausen"}, {"matricola": "S230060", "plz": "8212", "ort": "Neuhausen am Rheinfall", "punto_vendita": "16088 - avec Neuhausen"}, {"matricola": "S230100", "plz": "8280", "ort": "Kreuzlingen", "punto_vendita": "25225 - Tamoil Kreuzlingen"}, {"matricola": "S230105", "plz": "8280", "ort": "Kreuzlingen", "punto_vendita": "16451 - avec Kreuzlingen City"}, {"matricola": "S230138", "plz": "8302", "ort": "Kloten", "punto_vendita": "16148 - avec Kloten"}, {"matricola": "S230171", "plz": "8302", "ort": "Kloten", "punto_vendita": "18044 - BP Kloten"}, {"matricola": "S230142", "plz": "8303", "ort": "Bassersdorf", "punto_vendita": "16459 - avec Bassersdorf"}, {"matricola": "S230122", "plz": "8304", "ort": "Wallisellen", "punto_vendita": "16450 - avec Wallisellen"}, {"matricola": "S230151", "plz": "8304", "ort": "Wallisellen", "punto_vendita": "22671 - k kiosk Bahnhofstrasse"}, {"matricola": "S230150", "plz": "8305", "ort": "Dietlikon", "punto_vendita": "16147 - avec Dietlikon"}, {"matricola": "S230019", "plz": "8330", "ort": "Pfäffikon ZH", "punto_vendita": "25848 - k kiosk im EKZ Frohwiesen"}, {"matricola": "S230055", "plz": "8355", "ort": "Aadorf", "punto_vendita": "23911 - k kiosk beim Migros"}, {"matricola": "S230050", "plz": "8360", "ort": "Eschlikon TG", "punto_vendita": "16112 - avec Eschlikon"}, {"matricola": "S230043", "plz": "8400", "ort": "Winterthur", "punto_vendita": "16570 - K Kiosk am Stadttor"}, {"matricola": "S230214", "plz": "8400", "ort": "Winterthur", "punto_vendita": "17863 - k kiosk Kantonsspital"}, {"matricola": "S230029", "plz": "8404", "ort": "Winterthur", "punto_vendita": "16713 - avec Oberwinterthur"}, {"matricola": "S230240", "plz": "8406", "ort": "Winterthur", "punto_vendita": "24626 - k kiosk Migros Zent.Töss"}, {"matricola": "S230022", "plz": "8472", "ort": "Seuzach", "punto_vendita": "16093 - avec Seuzach"}, {"matricola": "S230016", "plz": "8494", "ort": "Bauma", "punto_vendita": "17962 - avec express Bauma"}, {"matricola": "S230012", "plz": "8500", "ort": "Frauenfeld", "punto_vendita": "16141 - avec Frauenfeld"}, {"matricola": "S230092", "plz": "8560", "ort": "Märstetten", "punto_vendita": "18043 - BP Märstetten"}, {"matricola": "S230183", "plz": "8580", "ort": "Amriswil", "punto_vendita": "16452 - avec Amriswil"}, {"matricola": "S230148", "plz": "8600", "ort": "Dübendorf", "punto_vendita": "33071 - Bahnhofkiosk"}, {"matricola": "S230188", "plz": "8600", "ort": "Dübendorf", "punto_vendita": "18474 - Tamoil Dübendorf"}, {"matricola": "S230036", "plz": "8606", "ort": "Nänikon", "punto_vendita": "17954 - avec express Nänikon"}, {"matricola": "S230184", "plz": "8620", "ort": "Wetzikon ZH", "punto_vendita": "39018 - Bahnhofkiosk"}, {"matricola": "S230216", "plz": "8620", "ort": "Wetzikon ZH", "punto_vendita": "39018 - Bahnhofkiosk"}, {"matricola": "S230119", "plz": "8707", "ort": "Uetikon am See", "punto_vendita": "16717 - avec beyond Uetikon am See"}, {"matricola": "S230156", "plz": "8712", "ort": "Stäfa", "punto_vendita": "16159 - avec Stäfa"}, {"matricola": "S230128", "plz": "8730", "ort": "Uznach", "punto_vendita": "18056 - BP Uznach"}, {"matricola": "S230219", "plz": "8730", "ort": "Uznach", "punto_vendita": "22319 - k kiosk EKZ Linth-Park"}, {"matricola": "S230015", "plz": "8804", "ort": "Au ZH", "punto_vendita": "16310 - avec Au"}, {"matricola": "S230014", "plz": "8805", "ort": "Richterswil", "punto_vendita": "16150 - avec Richterswil Bahnhof"}, {"matricola": "S230134", "plz": "8810", "ort": "Horgen-Oberdorf", "punto_vendita": "16719 - avec Horgen-Oberdorf"}, {"matricola": "S230221", "plz": "8810", "ort": "Horgen", "punto_vendita": "34330 - Bahnhofkiosk"}, {"matricola": "S230090", "plz": "8820", "ort": "Wädenswil", "punto_vendita": "16133 - avec Wädenswil"}, {"matricola": "S230131", "plz": "8853", "ort": "Lachen SZ", "punto_vendita": "17774 - avec Lachen"}, {"matricola": "S230097", "plz": "8887", "ort": "Mels", "punto_vendita": "18475 - Press & Books EKZ Pizolpark"}, {"matricola": "S230054", "plz": "8906", "ort": "Bonstetten", "punto_vendita": "16154 - avec Bonstetten"}, {"matricola": "S230044", "plz": "8910", "ort": "Affoltern am Albis", "punto_vendita": "16160 - avec Affoltern am Albis"}, {"matricola": "S230226", "plz": "8932", "ort": "Mettmenstetten", "punto_vendita": "16318 - avec Mettmenstetten"}, {"matricola": "S230026", "plz": "8952", "ort": "Schlieren", "punto_vendita": "33034 - Tamoil Schlieren Wagistrasse"}, {"matricola": "S230116", "plz": "9000", "ort": "St. Gallen", "punto_vendita": "16337 - avec St.Gallen"}, {"matricola": "S230096", "plz": "9001", "ort": "St. Gallen", "punto_vendita": "23192 - k kiosk Leonhard"}, {"matricola": "S230101", "plz": "9016", "ort": "St. Gallen", "punto_vendita": "25869 - k kiosk Post Neudorf"}, {"matricola": "S230117", "plz": "9030", "ort": "Abtwil", "punto_vendita": "23179 - k kiosk Säntispark VT"}, {"matricola": "S230088", "plz": "9100", "ort": "Herisau", "punto_vendita": "18111 - BP Herisau"}, {"matricola": "S230108", "plz": "9100", "ort": "Herisau", "punto_vendita": "16134 - avec Herisau Bahnhof"}, {"matricola": "S230110", "plz": "9100", "ort": "Herisau", "punto_vendita": "26261 - k kiosk Gutenbergzentrum"}, {"matricola": "S230243", "plz": "9240", "ort": "Uzwil", "punto_vendita": "17048 - avec beyond Uzwil"}, {"matricola": "S230263", "plz": "9300", "ort": "Wittenbach", "punto_vendita": "23290 - Bahnhofkiosk"}, {"matricola": "S230254", "plz": "9400", "ort": "Rorschach", "punto_vendita": "29700 - avec Rorschach"}, {"matricola": "S230238", "plz": "9403", "ort": "Goldach", "punto_vendita": "16718 - avec beyond Goldach"}, {"matricola": "S230245", "plz": "9422", "ort": "Staad SG", "punto_vendita": "12398 - Tamoil Staad"}, {"matricola": "S230074", "plz": "9430", "ort": "St. Margrethen SG", "punto_vendita": "16714 - avec beyond St. Margrethen"}, {"matricola": "S230071", "plz": "9435", "ort": "Heerbrugg", "punto_vendita": "16304 - avec Heerbrugg"}, {"matricola": "S230106", "plz": "9450", "ort": "Altstätten SG", "punto_vendita": "16704 - avec beyond Altstätten"}, {"matricola": "S230083", "plz": "9451", "ort": "Kriessern", "punto_vendita": "21488 - BP Tankstelle Kriessern"}, {"matricola": "S230077", "plz": "9470", "ort": "Buchs SG", "punto_vendita": "18041 - BP Buchs"}, {"matricola": "S230078", "plz": "9470", "ort": "Buchs SG", "punto_vendita": "15387 - avec Buchs"}, {"matricola": "S230089", "plz": "9500", "ort": "Wil SG", "punto_vendita": "16094 - avec Wil"}, {"matricola": "S230232", "plz": "9500", "ort": "Wil SG", "punto_vendita": "23943 - k kiosk Bahnhofstrasse"}, {"matricola": "S230104", "plz": "9602", "ort": "Bazenheid", "punto_vendita": "27580 - Bahnhofkiosk"}, {"matricola": "S230133", "plz": "9630", "ort": "Wattwil", "punto_vendita": "27560 - Bahnhofkiosk"}];
+
+
+  const state = {
+    lang: 'de',
+    numeroIntervento: null,
+    matricola: '', data: new Date().toISOString().slice(0,10), tecnico: '', puntoVendita: '',
+    fotoGenerale: [], items: ITEMS_BY_LANG.de.map(()=>({ ok:null, note:'', soluzione:'', foto:[] })),
+    noteFinali: '', saving:false, savedMsg:'', errorMsg:''
+  };
+  function t(){ return STRINGS[state.lang]; }
+  function items(){ return ITEMS_BY_LANG[state.lang]; }
+
+  async function loadNumeroIntervento(){
+    try{
+      const res = await fetch(WEBAPP_URL + '?action=nextid');
+      const data = await res.json();
+      state.numeroIntervento = data.nextId;
+    }catch(err){
+      state.numeroIntervento = 'err';
+      console.error(err);
+    }
+    render();
+  }
+
+  function currentStep(){
+    if(!state.matricola || !state.tecnico) return 0;
+    for(let i=0;i<state.items.length;i++){ if(state.items[i].ok===null) return i+1; }
+    return 10;
+  }
+  function allAnswered(){ return state.items.every(it=>it.ok!==null); }
+  function esitoStatus(){
+    if(!allAnswered()) return 'pending';
+    return state.items.some(it=>it.ok===false) ? 'warn' : 'ok';
+  }
+
+  // Ridimensiona e comprime una foto prima di convertirla in base64
+  function compressPhoto(file, cb){
+    const reader = new FileReader();
+    reader.onload = function(e){
+      const img = new Image();
+      img.onload = function(){
+        const maxW = 1000;
+        const scale = Math.min(1, maxW / img.width);
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width * scale;
+        canvas.height = img.height * scale;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        cb(canvas.toDataURL('image/jpeg', 0.7));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  async function saveIntervento(){
+    state.saving = true; state.errorMsg=''; render();
+    const payload = {
+      numeroIntervento: state.numeroIntervento,
+      matricola: state.matricola, data: state.data, tecnico: state.tecnico,
+      puntoVendita: state.puntoVendita, firma: state.tecnico,
+      fotoGenerale: state.fotoGenerale,
+      items: state.items.map((it,i)=>({ voce: items()[i].title, ok: it.ok, note: it.note, soluzione: it.soluzione, foto: it.foto })),
+      noteFinali: state.noteFinali
+    };
+    try{
+      await fetch(WEBAPP_URL, {
+        method: 'POST', mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+        body: JSON.stringify(payload)
+      });
+      state.savedMsg = t().savedMsg(state.matricola);
+      state.matricola=''; state.tecnico=''; state.puntoVendita=''; state.fotoGenerale=[]; state.noteFinali='';
+      state.items = items().map(()=>({ ok:null, note:'', soluzione:'', foto:[] }));
+      loadNumeroIntervento();
+    }catch(err){
+      state.errorMsg = t().errorMsg;
+      console.error(err);
+    }
+    state.saving = false; render();
+  }
+
+  function esc(s){ return (s||'').toString().replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+  function render(){
+    const step = currentStep();
+    const root = document.getElementById('app');
+    let html = `
+      <div class="topbar">
+        <div class="lang-switch">
+          <button class="lang-btn ${state.lang==='de'?'active':''}" data-lang="de">DE</button>
+          <button class="lang-btn ${state.lang==='en'?'active':''}" data-lang="en">EN</button>
+        </div>
+        <h1>${t().title}</h1>
+        <div class="intervento-badge">${t().interventoLabel}: <b>${state.numeroIntervento===null ? t().interventoLoading : (state.numeroIntervento==='err' ? t().interventoUnavailable : state.numeroIntervento)}</b></div>
+      </div>
+      <div class="content">
+    `;
+    const notConfigured = WEBAPP_URL.indexOf('INCOLLA_QUI') !== -1;
+    if(notConfigured){
+      html += `<div class="config-note">${t().configNote}</div>`;
+    }
+    html += renderForm(step);
+    html += `</div>`;
+    root.innerHTML = html;
+    bindEvents();
+  }
+
+  function renderRail(step){
+    let dots = '';
+    for(let i=0;i<11;i++){
+      let cls = 'dot';
+      if(i < step) cls += ' done'; else if(i === step) cls += ' current';
+      dots += `<div class="${cls}"></div>`;
+    }
+    return `<div class="rail">${dots}<span class="rail-label">${Math.min(step,10)}/10</span></div>`;
+  }
+
+  function renderForm(step){
+    let html = renderRail(step);
+    if(state.savedMsg) html += `<div class="banner-ok">${esc(state.savedMsg)}</div>`;
+    if(state.errorMsg) html += `<div class="banner-warn">${esc(state.errorMsg)}</div>`;
+
+    html += `
+    <div class="card">
+      <div class="field">
+        <label class="field-label">${t().matricolaLabel}</label>
+        <input type="text" id="matricola" autocomplete="off" placeholder="${esc(t().matricolaPlaceholder)}" value="${esc(state.matricola)}">
+        <div id="matricola-list" style="position:relative;"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label class="field-label">${t().dataLabel}</label><input type="date" id="data" value="${state.data}"></div>
+        <div class="field"><label class="field-label">${t().tecnicoLabel}</label><input type="text" id="tecnico" placeholder="${esc(t().tecnicoPlaceholder)}" value="${esc(state.tecnico)}"></div>
+      </div>
+      <div class="field"><label class="field-label">${t().puntoVenditaLabel}</label><input type="text" id="puntoVendita" placeholder="${esc(t().puntoVenditaPlaceholder)}" value="${esc(state.puntoVendita)}"></div>
+      <div class="field">
+        <label class="field-label">${t().fotoGeneraleLabel}</label>
+        <label class="photo-drop">${t().fotoGeneraleBtn}&nbsp;<input type="file" accept="image/*" capture="environment" id="fotoGenerale" multiple></label>
+        <div class="thumbs">${state.fotoGenerale.map(src=>`<div class="thumb"><img src="${src}"></div>`).join('')}</div>
+      </div>
+    </div>`;
+
+    items().forEach((def, i)=>{
+      const it = state.items[i];
+      const locked = i > 0 ? state.items[i-1].ok === null : (!state.matricola || !state.tecnico);
+      let cardCls = 'card';
+      if(locked) cardCls += ' locked';
+      else if(it.ok === true) cardCls += ' answered-ok';
+      else if(it.ok === false) cardCls += ' answered-warn';
+
+      html += `<div class="${cardCls}">
+        <div class="item-head">
+          <div class="item-num">${i+1}</div>
+          <div style="flex:1">
+            <h3>${esc(def.title)}</h3>
+            ${def.hint ? `<p class="note-hint">${esc(def.hint)}</p>` : ''}
+            <div class="toggle-row">
+              <button class="toggle-btn yes ${it.ok===true?'active':''}" data-item="${i}" data-val="true" ${locked?'disabled':''}>${t().yes}</button>
+              <button class="toggle-btn no ${it.ok===false?'active':''}" data-item="${i}" data-val="false" ${locked?'disabled':''}>${t().no}</button>
+            </div>
+            ${it.ok===false ? `
+              <div class="conditional">
+                <div class="field"><label class="field-label">${t().noteLabel}</label>
+                  <textarea data-note="${i}" placeholder="${esc(t().notePlaceholder)}">${esc(it.note)}</textarea></div>
+                <div class="field"><label class="field-label">${t().solutionLabel}</label>
+                  <textarea data-soluzione="${i}" placeholder="${esc(t().solutionPlaceholder)}">${esc(it.soluzione)}</textarea></div>
+                <div class="field"><label class="field-label">${t().fotoDettaglioLabel}</label>
+                  <label class="photo-drop">${t().fotoDettaglioBtn}&nbsp;<input type="file" accept="image/*" capture="environment" data-photo="${i}" multiple></label>
+                  <div class="thumbs">${it.foto.map(src=>`<div class="thumb"><img src="${src}"></div>`).join('')}</div>
+                </div>
+              </div>` : ''}
+          </div>
+        </div>
+      </div>`;
+    });
+
+    html += `
+    <div class="esito-box">
+      <div class="field"><label class="field-label">${t().noteFinaliLabel}</label>
+        <textarea id="noteFinali" placeholder="${esc(t().noteFinaliPlaceholder)}">${esc(state.noteFinali)}</textarea></div>
+      <p class="footer-hint">${t().footerHint}</p>
+      <button class="btn" id="salva" ${(!allAnswered() || state.saving) ? 'disabled' : ''}>
+        ${state.saving ? t().saving : t().saveBtn}
+      </button>
+    </div>`;
+    return html;
+  }
+
+  function bindEvents(){
+    const root = document.getElementById('app');
+    root.querySelectorAll('.lang-btn').forEach(b=>{
+      b.onclick = ()=>{ state.lang = b.dataset.lang; render(); };
+    });
+    const matricola = document.getElementById('matricola');
+    const matList = document.getElementById('matricola-list');
+    function filterList(q){
+      q = (q||'').trim().toLowerCase();
+      if(!q){ matList.innerHTML=''; return; }
+      const res = MATRICOLE.filter(m=>
+        m.matricola.toLowerCase().includes(q) ||
+        m.ort.toLowerCase().includes(q) ||
+        m.punto_vendita.toLowerCase().includes(q)
+      ).slice(0,25);
+      if(!res.length){ matList.innerHTML=''; return; }
+      matList.innerHTML = `<div class="autocomplete-list">${res.map(r=>`
+        <div class="autocomplete-item" data-mat="${esc(r.matricola)}">
+          <b>${esc(r.matricola)}</b>
+          <div class="meta">${esc(r.punto_vendita)} &middot; ${esc(r.plz)} ${esc(r.ort)}</div>
+        </div>`).join('')}</div>`;
+      matList.querySelectorAll('.autocomplete-item').forEach(el=>{
+        el.onclick = ()=>{
+          const found = MATRICOLE.find(m=>m.matricola===el.dataset.mat);
+          if(found){
+            state.matricola = found.matricola;
+            state.puntoVendita = found.punto_vendita + ' - ' + found.plz + ' ' + found.ort;
+          }
+          render();
+        };
+      });
+    }
+    if(matricola){
+      matricola.oninput = e=>{ state.matricola = e.target.value; state.puntoVendita=''; filterList(e.target.value); };
+      matricola.onfocus = e=>{ if(e.target.value) filterList(e.target.value); };
+      matricola.onblur = ()=> setTimeout(()=>{ if(matList) matList.innerHTML=''; }, 150);
+    }
+    const dataEl = document.getElementById('data');
+    if(dataEl) dataEl.onchange = e=>{ state.data = e.target.value; };
+    const tecnico = document.getElementById('tecnico');
+    if(tecnico){ tecnico.oninput = e=>{ state.tecnico = e.target.value; }; tecnico.onblur = ()=>render(); }
+    const pv = document.getElementById('puntoVendita');
+    if(pv) pv.oninput = e=>{ state.puntoVendita = e.target.value; };
+
+    const fotoGen = document.getElementById('fotoGenerale');
+    if(fotoGen) fotoGen.onchange = e=>{
+      const files = Array.from(e.target.files || []); let remaining = files.length;
+      if(!remaining) return;
+      files.forEach(f=> compressPhoto(f, src=>{ state.fotoGenerale.push(src); remaining--; if(remaining===0) render(); }));
+    };
+
+    root.querySelectorAll('.toggle-btn').forEach(btn=>{
+      btn.onclick = ()=>{
+        const i = parseInt(btn.dataset.item); const val = btn.dataset.val === 'true';
+        state.items[i].ok = val;
+        if(val){ state.items[i].note=''; state.items[i].soluzione=''; state.items[i].foto=[]; }
+        render();
+        setTimeout(()=>{ const cards = document.querySelectorAll('.card'); const target = cards[i+2]; if(target) target.scrollIntoView({behavior:'smooth', block:'center'}); }, 60);
+      };
+    });
+    root.querySelectorAll('[data-note]').forEach(ta=>{ ta.oninput = e=>{ state.items[parseInt(ta.dataset.note)].note = e.target.value; }; });
+    root.querySelectorAll('[data-soluzione]').forEach(ta=>{ ta.oninput = e=>{ state.items[parseInt(ta.dataset.soluzione)].soluzione = e.target.value; }; });
+    root.querySelectorAll('[data-photo]').forEach(inp=>{
+      inp.onchange = e=>{
+        const i = parseInt(inp.dataset.photo); const files = Array.from(e.target.files || []); let remaining = files.length;
+        if(!remaining) return;
+        files.forEach(f=> compressPhoto(f, src=>{ state.items[i].foto.push(src); remaining--; if(remaining===0) render(); }));
+      };
+    });
+
+    const noteFinali = document.getElementById('noteFinali');
+    if(noteFinali) noteFinali.oninput = e=>{ state.noteFinali = e.target.value; };
+    const salva = document.getElementById('salva');
+    if(salva) salva.onclick = saveIntervento;
+  }
+
+  render();
+  loadNumeroIntervento();
+})();
+</script>
